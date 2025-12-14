@@ -1,14 +1,14 @@
-name: Build c2ffi (static with musl)
+name: Build c2ffi
 
 on:
   push:
   pull_request:
-  workflow_dispatch:
+  workflow_dispatch:   # enables manual runs
 
 jobs:
   build:
-    name: Build on Ubuntu 20.04 (musl static)
-    runs-on: ubuntu-20.04
+    name: Build on Ubuntu
+    runs-on: ubuntu-latest
     steps:
 
       # 1️⃣ Checkout code
@@ -17,39 +17,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 2️⃣ Install dependencies including musl
-      - name: Install dependencies
+      # 2️⃣ Build Docker image
+      - name: Build Docker image
         run: |
-          sudo apt update -y
-          sudo apt-get install -y wget software-properties-common python3-pip musl-tools build-essential
+          docker build -f Docker/Test-Build-Ubuntu-20.04.docker -t c2ffi-build:latest .
 
-          # Add LLVM 18 repo and key
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          sudo add-apt-repository -s -y "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-18 main"
-          sudo apt update -y
-          sudo apt-get install -y llvm-18 clang-18 libclang-18-dev libclang-cpp18-dev
-
-          # Upgrade CMake via pip
-          pip3 install --upgrade cmake
-
-      # 3️⃣ Build c2ffi statically with musl
-      - name: Build c2ffi (static)
+      # 3️⃣ Extract entire build folder from Docker container
+      - name: Extract build folder
         run: |
           mkdir -p build
-          rm -rf build/*
-          # Set musl as the compiler
-          CC=musl-gcc CXX=musl-g++ cmake -S . -B build -DBUILD_CONFIG=Release -DCMAKE_EXE_LINKER_FLAGS="-static"
-          cmake --build build
+          CONTAINER_ID=$(docker create c2ffi-build:latest)
+          docker cp $CONTAINER_ID:/c2ffi/build ./build
+          docker rm $CONTAINER_ID
 
-      # 4️⃣ Check the binary is statically linked
-      - name: Verify static binary
-        run: |
-          file ./build/bin/c2ffi
-          ldd ./build/bin/c2ffi || true  # should show "not a dynamic executable"
-
-      # 5️⃣ Upload build folder
-      - name: Upload build folder
+      # 4️⃣ Upload entire build folder as artifact
+      - name: Upload build folder artifact
         uses: actions/upload-artifact@v4
         with:
-          name: c2ffi-build-static
+          name: c2ffi-build
           path: build
