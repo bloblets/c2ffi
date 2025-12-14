@@ -22,17 +22,17 @@ jobs:
         run: |
           docker build -f Docker/Test-Build-Ubuntu-20.04.docker -t c2ffi-build:latest .
 
-      # 3️⃣ Extract c2ffi binary from Docker container
-      - name: Extract c2ffi binary
+      # 3️⃣ Extract entire build folder from Docker container
+      - name: Extract build folder
         run: |
           mkdir -p build
           CONTAINER_ID=$(docker create c2ffi-build:latest)
-          docker cp $CONTAINER_ID:/c2ffi/build/bin/c2ffi ./build/c2ffi
+          docker cp $CONTAINER_ID:/c2ffi/build ./build
           docker rm $CONTAINER_ID
 
-      # 4️⃣ Upload c2ffi binary as artifact (using v4)
-      - name: Upload c2ffi binary
+      # 4️⃣ Upload entire build folder as artifact
+      - name: Upload build folder artifact
         uses: actions/upload-artifact@v4
         with:
-          name: c2ffi
-          path: build/c2ffi
+          name: c2ffi-build
+          path: build
