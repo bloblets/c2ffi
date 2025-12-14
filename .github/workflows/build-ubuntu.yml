@@ -1,20 +1,38 @@
-name: Build
+name: Build c2ffi
 
 on:
   push:
   pull_request:
-  workflow_dispatch:   # enables manual runs
+  workflow_dispatch:   # manual runs
 
 jobs:
   build:
     name: Build on Ubuntu
     runs-on: ubuntu-latest
     steps:
+
+      # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Build Ubuntu-20.04
+      # 2️⃣ Build Docker image
+      - name: Build Docker image
         run: |
-          docker build -f Docker/Test-Build-Ubuntu-20.04.docker .
+          docker build -f Docker/Test-Build-Ubuntu-20.04.docker -t c2ffi-build:latest .
+
+      # 3️⃣ Extract c2ffi binary from Docker container
+      - name: Extract c2ffi binary
+        run: |
+          mkdir -p build
+          CONTAINER_ID=$(docker create c2ffi-build:latest)
+          docker cp $CONTAINER_ID:/c2ffi/build/bin/c2ffi ./build/c2ffi
+          docker rm $CONTAINER_ID
+
+      # 4️⃣ Upload c2ffi binary as artifact
+      - name: Upload c2ffi binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: c2ffi
+          path: build/c2ffi
