@@ -3,7 +3,7 @@ name: Build c2ffi
 on:
   push:
   pull_request:
-  workflow_dispatch:   # manual runs
+  workflow_dispatch:   # enables manual runs
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
 
       # 1️⃣ Checkout code
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -30,9 +30,9 @@ jobs:
           docker cp $CONTAINER_ID:/c2ffi/build/bin/c2ffi ./build/c2ffi
           docker rm $CONTAINER_ID
 
-      # 4️⃣ Upload c2ffi binary as artifact
+      # 4️⃣ Upload c2ffi binary as artifact (using v4)
       - name: Upload c2ffi binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: c2ffi
           path: build/c2ffi
