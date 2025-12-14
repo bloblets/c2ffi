@@ -28,7 +28,10 @@ WORKDIR /c2ffi
 # Build c2ffi
 RUN cd /c2ffi && \
         rm -rf build && mkdir -p build && cd build && \
-        cmake -DBUILD_CONFIG=Release -DCMAKE_EXE_LINKER_FLAGS="-static" .. && make
+        cmake -DBUILD_CONFIG=Release -DCMAKE_INSTALL_RPATH='$ORIGIN' -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON .. && make
+
+RUN cp /usr/lib/llvm-18/lib/libLLVM-18.so.18.1 build/bin/ && \
+    cp /usr/lib/llvm-18/lib/libclang-cpp18.so.1 build/bin/ || true
 
 # As a sanity check, make sure the binary we built can be executed
 RUN /c2ffi/build/bin/c2ffi --help
